@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Winter Conference – Fees</title>
-<script src="xlsx.full.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7a1f2b">
+<link rel="icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f6f4ef;--card:#fff;--tx:#1d1b18;--mu:#6b665e;--ac:#7a1f2b;--ac2:#fff;--bd:#e3ded4;--ok:#1f7a3d;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171513;--card:#221f1c;--tx:#f1ede6;--mu:#a49e93;--ac:#d96a78;--ac2:#1a0a0d;--bd:#38332d;--ok:#5fd08a;--bad:#ff8a80}}
@@ -208,6 +211,7 @@ $('xl').onclick=async()=>{
   }catch(e){$('xlmsg').textContent=t('fail')}
 };
 applyLang();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
