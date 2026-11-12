@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Winter Conference – Fees</title>
+<script src="xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--tx:#1d1b18;--mu:#6b665e;--ac:#7a1f2b;--ac2:#fff;--bd:#e3ded4;--ok:#1f7a3d;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171513;--card:#221f1c;--tx:#f1ede6;--mu:#a49e93;--ac:#d96a78;--ac2:#1a0a0d;--bd:#38332d;--ok:#5fd08a;--bad:#ff8a80}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+header{padding:16px;background:var(--ac);color:var(--ac2)}
+header h1{margin:0;font-size:19px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
+main{padding:12px;max-width:640px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
+.row{display:flex;gap:10px;align-items:center}.sp{justify-content:space-between}
+.av{width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--bd);flex:none;display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:20px}
+.mu{color:var(--mu);font-size:13px}.b{font-weight:700}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;background:var(--ac);color:var(--ac2);font-weight:600}
+button.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+button.sm{padding:6px 10px;font-size:13px}
+input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border-radius:0;background:none;color:var(--mu);padding:14px 4px}
+nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));border-radius:28px;box-shadow:0 4px 14px #0004}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:9}
+.modal.show{display:flex}
+.sheet{background:var(--card);width:100%;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px;max-width:640px;margin:auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px}
+.stat .n{font-size:22px;font-weight:800}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header><div class="row sp"><div><h1 data-i="title"></h1><p data-i="church"></p></div><button class="sm" id="lang" style="background:var(--ac2);color:var(--ac)"></button></div></header>
+<main>
+  <section id="tab-people">
+    <input id="q" data-ph="search" style="margin-bottom:10px">
+    <div id="plist"></div>
+  </section>
+  <section id="tab-exp" class="hide">
+    <div id="elist"></div>
+  </section>
+  <section id="tab-sum" class="hide">
+    <div class="card">
+      <label style="margin-top:0" data-i="deffee"></label>
+      <input id="fee" type="number" inputmode="decimal" min="0">
+    </div>
+    <div id="stats" class="grid"></div>
+    <div class="card" style="margin-top:10px"><button id="xl" style="width:100%" data-i="export"></button><p class="mu" id="xlmsg"></p></div>
+    <div class="card"><button class="g" id="reset" style="width:100%" data-i="delall"></button></div>
+  </section>
+</main>
+<button class="fab" id="fab">＋ Add</button>
+<nav>
+  <button data-t="people" class="on">👥<br><span class="mu" data-i="nAtt"></span></button>
+  <button data-t="exp">🧾<br><span class="mu" data-i="nExp"></span></button>
+  <button data-t="sum">📊<br><span class="mu" data-i="nSum"></span></button>
+</nav>
+
+<div class="modal" id="m1"><div class="sheet">
+  <h3 style="margin-top:0" data-i="attendee"></h3>
+  <div class="row"><div class="av" id="pv">📷</div>
+  <div><button class="g sm" id="cam" data-i="photo"></button> <button class="g sm" id="rmph" data-i="remove"></button>
+  <input type="file" id="file" accept="image/*" capture="user" class="hide"></div></div>
+  <label data-i="name"></label><input id="pn" autocomplete="off">
+  <label data-i="year"></label>
+  <select id="py"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option value="Graduate" data-i="grad"></option></select>
+  <label data-i="feedue"></label><input id="pf" type="number" inputmode="decimal" min="0">
+  <label data-i="paid"></label><input id="pp" type="number" inputmode="decimal" min="0">
+  <p class="b"><span data-i="rem"></span>: <span id="prem">0</span></p>
+  <div class="row"><button id="psave" style="flex:1" data-i="save"></button><button class="g" id="pdel" data-i="del"></button><button class="g" id="pcancel" data-i="cancel"></button></div>
+</div></div>
+
+<div class="modal" id="m2"><div class="sheet">
+  <h3 style="margin-top:0" data-i="expense"></h3>
+  <label data-i="what"></label><input id="en" data-ph="whatph">
+  <label data-i="amount"></label><input id="ea" type="number" inputmode="decimal" min="0">
+  <div class="row" style="margin-top:14px"><button id="esave" style="flex:1" data-i="save"></button><button class="g" id="edel" data-i="del"></button><button class="g" id="ecancel" data-i="cancel"></button></div>
+</div></div>
+
+<div class="modal" id="m3" style="align-items:center;z-index:20"><div class="sheet" style="border-radius:18px;margin:16px auto;max-width:420px"><p class="b" id="cmsg"></p><div class="row"><button id="cyes" style="flex:1"></button><button class="g" id="cno" style="flex:1" data-i="cancel"></button></div></div></div>
+<script>
+const KEY='stmina_conf_v1';
+let S={fee:0,people:[],exp:[]};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Could not save on this device (storage full?). Export to Excel now.')}}
+const $=id=>document.getElementById(id);
+const n=v=>parseFloat(v)||0;
+const fmt=v=>(Math.round(v*100)/100).toLocaleString('en-US');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let tab='people',editP=null,editE=null,photo='';
+const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية"},
+ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English"}};
+let L='en';try{L=localStorage.getItem(KEY+'_l')||'en'}catch(e){}
+const t=k=>T[L][k];
+const yl=y=>y==='Graduate'?t('grad'):y;
+function applyLang(){
+  document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+  document.querySelectorAll('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
+  $('lang').textContent=t('lang');
+  $('fab').textContent=tab==='exp'?t('addE'):t('addA');
+  render();
+}
+function ask(msg){return new Promise(res=>{$('cmsg').textContent=msg;$('cyes').textContent=t('yes');$('m3').classList.add('show');
+  const done=v=>{$('m3').classList.remove('show');$('cyes').onclick=$('cno').onclick=null;res(v)};
+  $('cyes').onclick=()=>done(true);$('cno').onclick=()=>done(false)})}
+
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  tab=b.dataset.t;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  ['people','exp','sum'].forEach(t=>$('tab-'+t).classList.toggle('hide',t!==tab));
+  $('fab').classList.toggle('hide',tab==='sum');
+  applyLang();
+});
+
+function render(){
+  const q=$('q').value.trim().toLowerCase();
+  $('plist').innerHTML=S.people.filter(p=>p.name.toLowerCase().includes(q)).map(p=>{
+    const r=n(p.fee)-n(p.paid);
+    return `<div class="card row" data-id="${p.id}">
+      ${p.photo?`<img class="av" src="${p.photo}">`:`<div class="av">👤</div>`}
+      <div style="flex:1"><div class="b">${esc(p.name)}</div>
+      <div class="mu">${t('yr')}: ${esc(yl(p.year))}</div>
+      <div class="mu">${t('paidOf')} ${fmt(n(p.paid))} / ${fmt(n(p.fee))}</div></div>
+      <div class="b ${r>0?'bad':'ok'}">${r>0?fmt(r):t('full')}</div></div>`}).join('')||'<p class="mu">'+t('none')+'</p>';
+  $('elist').innerHTML=S.exp.map(e=>`<div class="card row sp" data-id="${e.id}"><div class="b">${esc(e.name)}</div><div class="b">${fmt(n(e.amount))}</div></div>`).join('')||'<p class="mu">'+t('noneE')+'</p>';
+  const due=S.people.reduce((a,p)=>a+n(p.fee),0),paid=S.people.reduce((a,p)=>a+n(p.paid),0),ex=S.exp.reduce((a,e)=>a+n(e.amount),0);
+  $('fee').value=S.fee||'';
+  $('stats').innerHTML=[[t('s1'),S.people.length],[t('s2'),fmt(due)],[t('s3'),fmt(paid)],[t('s4'),fmt(due-paid)],[t('s5'),fmt(ex)],[t('s6'),fmt(paid-ex)]].map(([a,b])=>`<div class="stat"><div class="mu">${a}</div><div class="n">${b}</div></div>`).join('');
+}
+$('q').oninput=render;$('lang').onclick=()=>{L=L==='en'?'ar':'en';try{localStorage.setItem(KEY+'_l',L)}catch(e){}applyLang()};
+$('fee').oninput=e=>{S.fee=n(e.target.value);save()};
+$('plist').onclick=e=>{const c=e.target.closest('[data-id]');if(c)openP(c.dataset.id)};
+$('elist').onclick=e=>{const c=e.target.closest('[data-id]');if(c)openE(c.dataset.id)};
+$('fab').onclick=()=>tab==='exp'?openE():openP();
+
+function setPv(){$('pv').innerHTML=photo?`<img class="av" src="${photo}">`:'📷'}
+function calc(){$('prem').textContent=fmt(n($('pf').value)-n($('pp').value))}
+function openP(id){
+  editP=id||null;const p=S.people.find(x=>x.id===id)||{name:'',year:'1',fee:S.fee,paid:'',photo:''};
+  $('pn').value=p.name;$('py').value=p.year;$('pf').value=p.fee||'';$('pp').value=p.paid||'';photo=p.photo||'';
+  $('pdel').style.display=id?'':'none';setPv();calc();$('m1').classList.add('show');
+}
+$('pf').oninput=calc;$('pp').oninput=calc;
+$('cam').onclick=()=>$('file').click();
+$('rmph').onclick=()=>{photo='';setPv()};
+$('file').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image(),u=URL.createObjectURL(f);
+  img.onload=()=>{const s=240/Math.max(img.width,img.height,240)*1,w=Math.round(img.width*Math.min(1,s)),h=Math.round(img.height*Math.min(1,s));
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    photo=c.toDataURL('image/jpeg',.6);URL.revokeObjectURL(u);setPv()};
+  img.src=u;e.target.value='';
+};
+$('pcancel').onclick=()=>$('m1').classList.remove('show');
+$('psave').onclick=()=>{
+  const name=$('pn').value.trim();if(!name){$('pn').focus();return}
+  const d={name,year:$('py').value,fee:n($('pf').value),paid:n($('pp').value),photo};
+  if(editP)Object.assign(S.people.find(x=>x.id===editP),d);else S.people.push(Object.assign({id:'p'+Date.now()},d));
+  save();$('m1').classList.remove('show');render();
+};
+$('pdel').onclick=async()=>{if(await ask(t('cDelP'))){S.people=S.people.filter(x=>x.id!==editP);save();$('m1').classList.remove('show');render()}};
+
+function openE(id){
+  editE=id||null;const x=S.exp.find(e=>e.id===id)||{name:'',amount:''};
+  $('en').value=x.name;$('ea').value=x.amount;$('edel').style.display=id?'':'none';$('m2').classList.add('show');
+}
+$('ecancel').onclick=()=>$('m2').classList.remove('show');
+$('esave').onclick=()=>{
+  const name=$('en').value.trim();if(!name){$('en').focus();return}
+  const d={name,amount:n($('ea').value)};
+  if(editE)Object.assign(S.exp.find(x=>x.id===editE),d);else S.exp.push(Object.assign({id:'e'+Date.now()},d));
+  save();$('m2').classList.remove('show');render();
+};
+$('edel').onclick=async()=>{if(await ask(t('cDelE'))){S.exp=S.exp.filter(x=>x.id!==editE);save();$('m2').classList.remove('show');render()}};
+
+$('reset').onclick=async()=>{if(await ask(t('cAll'))){S={fee:S.fee,people:[],exp:[]};save();render()}};
+
+$('xl').onclick=async()=>{
+  const due=S.people.reduce((a,p)=>a+n(p.fee),0),paid=S.people.reduce((a,p)=>a+n(p.paid),0),ex=S.exp.reduce((a,e)=>a+n(e.amount),0);
+  const A=[['#',t('name'),t('hYear'),t('hFee'),t('hPaid'),t('hRem')],...S.people.map((p,i)=>[i+1,p.name,yl(p.year),n(p.fee),n(p.paid),n(p.fee)-n(p.paid)]),[],['',t('total'),'',due,paid,due-paid]];
+  const B=[['#',t('hExp'),t('amount')],...S.exp.map((e,i)=>[i+1,e.name,n(e.amount)]),[],['',t('total'),ex]];
+  const C=[[t('s1'),S.people.length],[t('s2'),due],[t('s3'),paid],[t('s4'),due-paid],[t('s5'),ex],[t('s6'),paid-ex]];
+  const wb=XLSX.utils.book_new();
+  [[t('shA'),A,[5,28,10,12,12,12]],[t('shE'),B,[5,32,14]],[t('shS'),C,[34,16]]].forEach(([nm,d,w])=>{
+    const ws=XLSX.utils.aoa_to_sheet(d);ws['!cols']=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,nm)});
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  try{
+    const type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',name='conference-fees.xlsx';
+    const P=window.Capacitor&&window.Capacitor.Plugins;
+    if(P&&P.Filesystem&&P.Share){
+      const b64=XLSX.write(wb,{type:'base64',bookType:'xlsx'});
+      const r=await P.Filesystem.writeFile({path:name,data:b64,directory:'CACHE'});
+      await P.Share.share({title:name,url:r.uri});
+    }else{
+      const blob=new Blob([buf],{type});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+      document.body.appendChild(a);a.click();a.remove();
+    }
+    $('xlmsg').textContent=t('saved');
+  }catch(e){$('xlmsg').textContent=t('fail')}
+};
+applyLang();
+</script>
+</body>
+</html>
