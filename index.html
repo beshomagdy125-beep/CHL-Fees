@@ -7,6 +7,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7a1f2b">
 <link rel="icon" href="icon-192.png">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#f6f4ef;--card:#fff;--tx:#1d1b18;--mu:#6b665e;--ac:#7a1f2b;--ac2:#fff;--bd:#e3ded4;--ok:#1f7a3d;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -40,7 +42,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
 </style>
 </head>
 <body>
-<header><div class="row sp"><div><h1 data-i="title"></h1><p data-i="church"></p></div><button class="sm" id="lang" style="background:var(--ac2);color:var(--ac)"></button></div></header>
+<header><div class="row sp"><div><h1 data-i="title"></h1><p data-i="church"></p></div><div style="text-align:end"><button class="sm" id="lang" style="background:var(--ac2);color:var(--ac)"></button><div style="font-size:12px;margin-top:4px"><span id="who"></span> <a href="#" id="logout" style="color:inherit" data-i="logout"></a></div></div></div></header>
 <main>
   <section id="tab-people">
     <input id="q" data-ph="search" style="margin-bottom:10px">
@@ -56,6 +58,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
     </div>
     <div id="stats" class="grid"></div>
     <div class="card" style="margin-top:10px"><button id="xl" style="width:100%" data-i="export"></button><p class="mu" id="xlmsg"></p></div>
+    <div class="card"><div class="b" data-i="logt"></div><div id="logl"></div></div>
     <div class="card"><button class="g" id="reset" style="width:100%" data-i="delall"></button></div>
   </section>
 </main>
@@ -87,19 +90,54 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
   <div class="row" style="margin-top:14px"><button id="esave" style="flex:1" data-i="save"></button><button class="g" id="edel" data-i="del"></button><button class="g" id="ecancel" data-i="cancel"></button></div>
 </div></div>
 
+<div class="modal" id="login" style="align-items:center;z-index:30"><div class="sheet" style="border-radius:18px;margin:16px auto;max-width:420px"><h3 style="margin-top:0" data-i="signin"></h3><label data-i="user"></label><select id="lu"></select><label data-i="pin"></label><input id="lp" type="password" inputmode="text" autocomplete="off"><p class="bad" id="lerr"></p><button id="lgo" style="width:100%" data-i="signin"></button></div></div>
 <div class="modal" id="m3" style="align-items:center;z-index:20"><div class="sheet" style="border-radius:18px;margin:16px auto;max-width:420px"><p class="b" id="cmsg"></p><div class="row"><button id="cyes" style="flex:1"></button><button class="g" id="cno" style="flex:1" data-i="cancel"></button></div></div></div>
 <script>
 const KEY='stmina_conf_v1';
-let S={fee:0,people:[],exp:[]};
+/* ====== EDIT THESE ====== */
+const USERS=[{name:'User1',pin:'CHL2027'},{name:'User2',pin:'CHL2027'}];
+const FIREBASE_CONFIG={apiKey:"AIzaSyDkcT-pOtSAreP983ASbw4JVKipg6s_IMs",authDomain:"chl-fees.firebaseapp.com",projectId:"chl-fees",storageBucket:"chl-fees.firebasestorage.app",messagingSenderId:"1068414885265",appId:"1:1068414885265:web:492181d8b8e6ff7601ce30"};
+/* ======================== */
+let S={fee:0,people:[],exp:[],log:[]};
+let DB=null,USER=null;
+try{if(!FIREBASE_CONFIG.apiKey.startsWith('PASTE')){firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore();DB.enablePersistence({synchronizeTabs:true}).catch(()=>{})}}catch(e){DB=null}
+try{USER=localStorage.getItem('stmina_user')}catch(e){}
 try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+function commit(col,id,d,act,label){
+  const arr=col==='people'?S.people:S.exp;let rec=arr.find(x=>x.id===id);const meta={by:USER,at:Date.now()};
+  if(rec)Object.assign(rec,d,meta);else{rec=Object.assign({id:col[0]+Date.now()},d,meta);arr.push(rec)}
+  if(DB)DB.collection(col).doc(rec.id).set(rec).catch(()=>{});else save();
+  logAct(act,label);
+}
+function remove(col,id,label){
+  if(col==='people')S.people=S.people.filter(x=>x.id!==id);else S.exp=S.exp.filter(x=>x.id!==id);
+  if(DB)DB.collection(col).doc(id).delete().catch(()=>{});else save();
+  logAct('del',label);
+}
+function logAct(act,label){
+  const e={by:USER,at:Date.now(),act,label};S.log.unshift(e);S.log=S.log.slice(0,50);
+  if(DB)DB.collection('log').add(e).catch(()=>{});else save();
+}
+async function wipeAll(){
+  S={fee:S.fee,people:[],exp:[],log:[]};
+  if(DB){for(const c of ['people','exp','log']){const q=await DB.collection(c).get();const b=DB.batch();q.docs.forEach(d=>b.delete(d.ref));await b.commit()}}else save();
+}
+function startSync(){
+  if(!DB)return;
+  const srt=(a,b)=>a.id.slice(1)-b.id.slice(1);
+  DB.collection('people').onSnapshot(q=>{S.people=q.docs.map(d=>d.data()).sort(srt);render()});
+  DB.collection('exp').onSnapshot(q=>{S.exp=q.docs.map(d=>d.data()).sort(srt);render()});
+  DB.collection('log').orderBy('at','desc').limit(50).onSnapshot(q=>{S.log=q.docs.map(d=>d.data());render()});
+  DB.collection('meta').doc('settings').onSnapshot(d=>{if(d.exists){S.fee=d.data().fee||0;render()}});
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Could not save on this device (storage full?). Export to Excel now.')}}
 const $=id=>document.getElementById(id);
 const n=v=>parseFloat(v)||0;
 const fmt=v=>(Math.round(v*100)/100).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='people',editP=null,editE=null,photo='';
-const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية"},
-ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English"}};
+const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية",by:"بواسطة",logt:"سجل النشاط",aadd:"أضاف",aedit:"عدّل",adel:"حذف",signin:"تسجيل الدخول",user:"اسم المستخدم",pin:"كلمة المرور",wrong:"كلمة المرور غير صحيحة",logout:"خروج",nolog:"لا يوجد نشاط بعد."},
+ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English",by:"by",logt:"Activity log",aadd:"added",aedit:"edited",adel:"deleted",signin:"Sign in",user:"Username",pin:"Password",wrong:"Wrong password",logout:"Log out",nolog:"No activity yet."}};
 let L='en';try{L=localStorage.getItem(KEY+'_l')||'en'}catch(e){}
 const t=k=>T[L][k];
 const yl=y=>y==='Graduate'?t('grad'):y;
@@ -131,15 +169,18 @@ function render(){
       ${p.photo?`<img class="av" src="${p.photo}">`:`<div class="av">👤</div>`}
       <div style="flex:1"><div class="b">${esc(p.name)}</div>
       <div class="mu">${t('yr')}: ${esc(yl(p.year))}</div>
+      <div class="mu">${t('by')} ${esc(p.by||'-')}</div>
       <div class="mu">${t('paidOf')} ${fmt(n(p.paid))} / ${fmt(n(p.fee))}</div></div>
       <div class="b ${r>0?'bad':'ok'}">${r>0?fmt(r):t('full')}</div></div>`}).join('')||'<p class="mu">'+t('none')+'</p>';
-  $('elist').innerHTML=S.exp.map(e=>`<div class="card row sp" data-id="${e.id}"><div class="b">${esc(e.name)}</div><div class="b">${fmt(n(e.amount))}</div></div>`).join('')||'<p class="mu">'+t('noneE')+'</p>';
+  $('elist').innerHTML=S.exp.map(e=>`<div class="card row sp" data-id="${e.id}"><div><div class="b">${esc(e.name)}</div><div class="mu">${t('by')} ${esc(e.by||'-')}</div></div><div class="b">${fmt(n(e.amount))}</div></div>`).join('')||'<p class="mu">'+t('noneE')+'</p>';
   const due=S.people.reduce((a,p)=>a+n(p.fee),0),paid=S.people.reduce((a,p)=>a+n(p.paid),0),ex=S.exp.reduce((a,e)=>a+n(e.amount),0);
-  $('fee').value=S.fee||'';
+  if(document.activeElement!==$('fee'))$('fee').value=S.fee||'';
+  const aw={add:t('aadd'),edit:t('aedit'),del:t('adel')};
+  $('logl').innerHTML=S.log.map(e=>`<div class="mu" style="margin-top:6px"><b>${esc(e.by)}</b> ${aw[e.act]||''} ${esc(e.label)}<br>${new Date(e.at).toLocaleString(L==='ar'?'ar-EG':'en-GB')}</div>`).join('')||`<div class="mu">${t('nolog')}</div>`;
   $('stats').innerHTML=[[t('s1'),S.people.length],[t('s2'),fmt(due)],[t('s3'),fmt(paid)],[t('s4'),fmt(due-paid)],[t('s5'),fmt(ex)],[t('s6'),fmt(paid-ex)]].map(([a,b])=>`<div class="stat"><div class="mu">${a}</div><div class="n">${b}</div></div>`).join('');
 }
 $('q').oninput=render;$('lang').onclick=()=>{L=L==='en'?'ar':'en';try{localStorage.setItem(KEY+'_l',L)}catch(e){}applyLang()};
-$('fee').oninput=e=>{S.fee=n(e.target.value);save()};
+$('fee').oninput=e=>{S.fee=n(e.target.value);if(DB)DB.collection('meta').doc('settings').set({fee:S.fee}).catch(()=>{});else save()};
 $('plist').onclick=e=>{const c=e.target.closest('[data-id]');if(c)openP(c.dataset.id)};
 $('elist').onclick=e=>{const c=e.target.closest('[data-id]');if(c)openE(c.dataset.id)};
 $('fab').onclick=()=>tab==='exp'?openE():openP();
@@ -166,10 +207,9 @@ $('pcancel').onclick=()=>$('m1').classList.remove('show');
 $('psave').onclick=()=>{
   const name=$('pn').value.trim();if(!name){$('pn').focus();return}
   const d={name,year:$('py').value,fee:n($('pf').value),paid:n($('pp').value),photo};
-  if(editP)Object.assign(S.people.find(x=>x.id===editP),d);else S.people.push(Object.assign({id:'p'+Date.now()},d));
-  save();$('m1').classList.remove('show');render();
+  commit('people',editP,d,editP?'edit':'add',name);$('m1').classList.remove('show');render();
 };
-$('pdel').onclick=async()=>{if(await ask(t('cDelP'))){S.people=S.people.filter(x=>x.id!==editP);save();$('m1').classList.remove('show');render()}};
+$('pdel').onclick=async()=>{if(await ask(t('cDelP'))){remove('people',editP,($('pn').value||'').trim());$('m1').classList.remove('show');render()}};
 
 function openE(id){
   editE=id||null;const x=S.exp.find(e=>e.id===id)||{name:'',amount:''};
@@ -179,12 +219,11 @@ $('ecancel').onclick=()=>$('m2').classList.remove('show');
 $('esave').onclick=()=>{
   const name=$('en').value.trim();if(!name){$('en').focus();return}
   const d={name,amount:n($('ea').value)};
-  if(editE)Object.assign(S.exp.find(x=>x.id===editE),d);else S.exp.push(Object.assign({id:'e'+Date.now()},d));
-  save();$('m2').classList.remove('show');render();
+  commit('exp',editE,d,editE?'edit':'add',name+' ('+fmt(d.amount)+')');$('m2').classList.remove('show');render();
 };
-$('edel').onclick=async()=>{if(await ask(t('cDelE'))){S.exp=S.exp.filter(x=>x.id!==editE);save();$('m2').classList.remove('show');render()}};
+$('edel').onclick=async()=>{if(await ask(t('cDelE'))){remove('exp',editE,($('en').value||'').trim());$('m2').classList.remove('show');render()}};
 
-$('reset').onclick=async()=>{if(await ask(t('cAll'))){S={fee:S.fee,people:[],exp:[]};save();render()}};
+$('reset').onclick=async()=>{if(await ask(t('cAll'))){await wipeAll();render()}};
 
 $('xl').onclick=async()=>{
   const due=S.people.reduce((a,p)=>a+n(p.fee),0),paid=S.people.reduce((a,p)=>a+n(p.paid),0),ex=S.exp.reduce((a,e)=>a+n(e.amount),0);
@@ -210,7 +249,13 @@ $('xl').onclick=async()=>{
     $('xlmsg').textContent=t('saved');
   }catch(e){$('xlmsg').textContent=t('fail')}
 };
+$('lu').innerHTML=USERS.map(u=>`<option>${esc(u.name)}</option>`).join('');
+function enter(){$('login').classList.remove('show');$('who').textContent='👤 '+USER;startSync()}
+$('lgo').onclick=()=>{const u=USERS.find(x=>x.name===$('lu').value);
+  if(u&&u.pin===$('lp').value.trim()){USER=u.name;try{localStorage.setItem('stmina_user',USER)}catch(e){}$('lp').value='';$('lerr').textContent='';enter()}else $('lerr').textContent=t('wrong')};
+$('logout').onclick=e=>{e.preventDefault();try{localStorage.removeItem('stmina_user')}catch(x){}location.reload()};
 applyLang();
+if(USER&&USERS.some(u=>u.name===USER))enter();else $('login').classList.add('show');
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
