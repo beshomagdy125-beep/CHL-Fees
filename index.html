@@ -5,17 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Winter Conference – Fees</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7a1f2b">
+<meta name="theme-color" content="#0f0e0d">
 <link rel="icon" href="icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{--bg:#f6f4ef;--card:#fff;--tx:#1d1b18;--mu:#6b665e;--ac:#7a1f2b;--ac2:#fff;--bd:#e3ded4;--ok:#1f7a3d;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171513;--card:#221f1c;--tx:#f1ede6;--mu:#a49e93;--ac:#d96a78;--ac2:#1a0a0d;--bd:#38332d;--ok:#5fd08a;--bad:#ff8a80}}
-*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{color-scheme:dark;--bg:#0f0e0d;--card:#1b1917;--tx:#f1ede6;--mu:#a49e93;--ac:#d96a78;--ac2:#1a0a0d;--bd:#34302b;--ok:#5fd08a;--bad:#ff8a80;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
-header{padding:16px;background:var(--ac);color:var(--ac2)}
+header{padding:16px;background:var(--card);color:var(--tx);border-bottom:1px solid var(--bd)}
 header h1{margin:0;font-size:19px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
 main{padding:12px;max-width:640px;margin:auto}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
@@ -42,7 +41,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
 </style>
 </head>
 <body>
-<header><div class="row sp"><div><h1 data-i="title"></h1><p data-i="church"></p></div><div style="text-align:end"><button class="sm" id="lang" style="background:var(--ac2);color:var(--ac)"></button><div style="font-size:12px;margin-top:4px"><span id="who"></span> <a href="#" id="logout" style="color:inherit" data-i="logout"></a></div></div></div></header>
+<header><div class="row sp"><div><h1 data-i="title"></h1><p data-i="church"></p></div><div style="text-align:end"><button class="sm" id="lang" style="background:var(--ac);color:var(--ac2)"></button><div style="font-size:12px;margin-top:4px"><span id="who"></span> <a href="#" id="logout" style="color:inherit" data-i="logout"></a></div></div></div></header>
 <main>
   <section id="tab-people">
     <input id="q" data-ph="search" style="margin-bottom:10px">
@@ -130,19 +129,19 @@ function startSync(){
   DB.collection('log').orderBy('at','desc').limit(50).onSnapshot(q=>{S.log=q.docs.map(d=>d.data());render()});
   DB.collection('meta').doc('settings').onSnapshot(d=>{if(d.exists){S.fee=d.data().fee||0;render()}});
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Could not save on this device (storage full?). Export to Excel now.')}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert(t('saveErr'))}}
 const $=id=>document.getElementById(id);
 const n=v=>parseFloat(v)||0;
-const fmt=v=>(Math.round(v*100)/100).toLocaleString('en-US');
+const fmt=v=>(Math.round(v*100)/100).toLocaleString(L==='ar'?'ar-EG':'en-US');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='people',editP=null,editE=null,photo='';
-const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية",by:"بواسطة",logt:"سجل النشاط",aadd:"أضاف",aedit:"عدّل",adel:"حذف",signin:"تسجيل الدخول",user:"اسم المستخدم",pin:"كلمة المرور",wrong:"كلمة المرور غير صحيحة",logout:"خروج",nolog:"لا يوجد نشاط بعد."},
-ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English",by:"by",logt:"Activity log",aadd:"added",aedit:"edited",adel:"deleted",signin:"Sign in",user:"Username",pin:"Password",wrong:"Wrong password",logout:"Log out",nolog:"No activity yet."}};
+const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية",saveErr:"تعذّر الحفظ على هذا الجهاز (المساحة ممتلئة؟). صدّر ملف إكسل الآن.",by:"بواسطة",logt:"سجل النشاط",aadd:"أضاف",aedit:"عدّل",adel:"حذف",signin:"تسجيل الدخول",user:"اسم المستخدم",pin:"كلمة المرور",wrong:"كلمة المرور غير صحيحة",logout:"خروج",nolog:"لا يوجد نشاط بعد."},
+ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English",by:"by",logt:"Activity log",aadd:"added",aedit:"edited",adel:"deleted",signin:"Sign in",user:"Username",pin:"Password",wrong:"Wrong password",logout:"Log out",nolog:"No activity yet.",saveErr:"Could not save on this device (storage full?). Export to Excel now."}};
 let L='en';try{L=localStorage.getItem(KEY+'_l')||'en'}catch(e){}
 const t=k=>T[L][k];
 const yl=y=>y==='Graduate'?t('grad'):y;
 function applyLang(){
-  document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';
+  document.title=t('title').replace('✝ ','');document.documentElement.lang=L;document.documentElement.dir=L==='ar'?'rtl':'ltr';
   document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
   document.querySelectorAll('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
   $('lang').textContent=t('lang');
@@ -177,7 +176,7 @@ function render(){
   if(document.activeElement!==$('fee'))$('fee').value=S.fee||'';
   const aw={add:t('aadd'),edit:t('aedit'),del:t('adel')};
   $('logl').innerHTML=S.log.map(e=>`<div class="mu" style="margin-top:6px"><b>${esc(e.by)}</b> ${aw[e.act]||''} ${esc(e.label)}<br>${new Date(e.at).toLocaleString(L==='ar'?'ar-EG':'en-GB')}</div>`).join('')||`<div class="mu">${t('nolog')}</div>`;
-  $('stats').innerHTML=[[t('s1'),S.people.length],[t('s2'),fmt(due)],[t('s3'),fmt(paid)],[t('s4'),fmt(due-paid)],[t('s5'),fmt(ex)],[t('s6'),fmt(paid-ex)]].map(([a,b])=>`<div class="stat"><div class="mu">${a}</div><div class="n">${b}</div></div>`).join('');
+  $('stats').innerHTML=[[t('s1'),fmt(S.people.length)],[t('s2'),fmt(due)],[t('s3'),fmt(paid)],[t('s4'),fmt(due-paid)],[t('s5'),fmt(ex)],[t('s6'),fmt(paid-ex)]].map(([a,b])=>`<div class="stat"><div class="mu">${a}</div><div class="n">${b}</div></div>`).join('');
 }
 $('q').oninput=render;$('lang').onclick=()=>{L=L==='en'?'ar':'en';try{localStorage.setItem(KEY+'_l',L)}catch(e){}applyLang()};
 $('fee').oninput=e=>{S.fee=n(e.target.value);if(DB)DB.collection('meta').doc('settings').set({fee:S.fee}).catch(()=>{});else save()};
