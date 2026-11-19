@@ -78,6 +78,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
   <div><button class="g sm" id="cam" data-i="photo"></button> <button class="g sm" id="rmph" data-i="remove"></button>
   <input type="file" id="file" accept="image/*" capture="user" class="hide"></div></div>
   <label data-i="name"></label><input id="pn" autocomplete="off">
+  <label data-i="phone"></label><input id="pph" type="tel" inputmode="tel" autocomplete="off">
   <label data-i="year"></label>
   <select id="py"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option value="Graduate" data-i="grad"></option></select>
   <label data-i="feedue"></label><input id="pf" type="number" inputmode="decimal" min="0">
@@ -139,8 +140,8 @@ const n=v=>parseFloat(v)||0;
 const fmt=v=>(Math.round(v*100)/100).toLocaleString(L==='ar'?'ar-EG':'en-US');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab='people',editP=null,editE=null,photo='';
-const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية",by:"by",logt:"Activity log",aadd:"added",aedit:"edited",adel:"deleted",signin:"Sign in",user:"Username",pin:"Password",wrong:"Wrong password",logout:"Log out",nolog:"No activity yet.",back:"← Back",saveErr:"Could not save on this device (storage full?). Export to Excel now."},
-ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English",by:"بواسطة",logt:"سجل النشاط",aadd:"أضاف",aedit:"عدّل",adel:"حذف",signin:"تسجيل الدخول",user:"اسم المستخدم",pin:"كلمة المرور",wrong:"كلمة المرور غير صحيحة",logout:"خروج",nolog:"لا يوجد نشاط بعد.",back:"→ رجوع",saveErr:"تعذّر الحفظ على هذا الجهاز (المساحة ممتلئة؟). صدّر ملف إكسل الآن."}};
+const T={en:{title:"✝ Winter Conference – Fees",church:"St. Mina Coptic Orthodox Church",search:"Search by name…",deffee:"Default fee per attendee",export:"⬇ Export to Excel",delall:"Delete all data",nAtt:"Attendees",nExp:"Expenses",nSum:"Summary",attendee:"Attendee",photo:"Take photo",remove:"Remove",name:"Name",year:"Year of study",grad:"Graduate",feedue:"Fee due",paid:"Amount paid",rem:"Remaining",save:"Save",del:"Delete",cancel:"Cancel",expense:"Expense",what:"What for?",whatph:"e.g. Bus rental, food…",amount:"Amount",addA:"＋ Attendee",addE:"＋ Expense",none:"No attendees yet. Tap “Attendee”.",noneE:"No expenses yet.",yr:"Year",paidOf:"Paid",full:"✓ Paid",s1:"Attendees",s2:"Expected total",s3:"Collected",s4:"Still to collect",s5:"Total expenses",s6:"Cash left (collected − expenses)",cDelP:"Delete this attendee?",cDelE:"Delete this expense?",cAll:"Delete ALL attendees and expenses? This cannot be undone. Export first!",yes:"Yes, delete",total:"TOTAL",shA:"Attendees",shE:"Expenses",shS:"Summary",hFee:"Fee due",hPaid:"Paid",hRem:"Remaining",hExp:"Expense",hYear:"Year",noex:"Export is not available in this view. Open the app link in Chrome.",saved:"Saved ✓",canc:"Cancelled.",fail:"Could not save the file.",lang:"العربية",by:"by",logt:"Activity log",aadd:"added",aedit:"edited",adel:"deleted",signin:"Sign in",user:"Username",pin:"Password",wrong:"Wrong password",logout:"Log out",nolog:"No activity yet.",phone:"Phone number",back:"← Back",saveErr:"Could not save on this device (storage full?). Export to Excel now."},
+ar:{title:"✝ مؤتمر الشتاء – الاشتراكات",church:"كنيسة الأنبا مينا القبطية الأرثوذكسية",search:"ابحث بالاسم…",deffee:"الاشتراك الافتراضي للفرد",export:"⬇ تصدير إلى إكسل",delall:"حذف كل البيانات",nAtt:"المشتركون",nExp:"المصروفات",nSum:"الملخص",attendee:"مشترك",photo:"التقاط صورة",remove:"إزالة",name:"الاسم",year:"السنة الدراسية",grad:"خريج",feedue:"المبلغ المطلوب",paid:"المبلغ المدفوع",rem:"المتبقي",save:"حفظ",del:"حذف",cancel:"إلغاء",expense:"مصروف",what:"بند المصروف",whatph:"مثال: إيجار أتوبيس، طعام…",amount:"المبلغ",addA:"＋ مشترك",addE:"＋ مصروف",none:"لا يوجد مشتركون بعد. اضغط «مشترك».",noneE:"لا توجد مصروفات بعد.",yr:"السنة",paidOf:"دفع",full:"✓ مدفوع",s1:"عدد المشتركين",s2:"إجمالي المتوقع",s3:"المحصّل",s4:"المتبقي للتحصيل",s5:"إجمالي المصروفات",s6:"الرصيد (المحصّل − المصروفات)",cDelP:"حذف هذا المشترك؟",cDelE:"حذف هذا المصروف؟",cAll:"حذف كل المشتركين والمصروفات؟ لا يمكن التراجع. صدّر الملف أولاً!",yes:"نعم، احذف",total:"الإجمالي",shA:"المشتركون",shE:"المصروفات",shS:"الملخص",hFee:"المطلوب",hPaid:"المدفوع",hRem:"المتبقي",hExp:"البند",hYear:"السنة",noex:"التصدير غير متاح هنا. افتح الرابط في Chrome.",saved:"تم الحفظ ✓",canc:"تم الإلغاء.",fail:"تعذّر حفظ الملف.",lang:"English",by:"بواسطة",logt:"سجل النشاط",aadd:"أضاف",aedit:"عدّل",adel:"حذف",signin:"تسجيل الدخول",user:"اسم المستخدم",pin:"كلمة المرور",wrong:"كلمة المرور غير صحيحة",logout:"خروج",nolog:"لا يوجد نشاط بعد.",phone:"رقم الهاتف",back:"→ رجوع",saveErr:"تعذّر الحفظ على هذا الجهاز (المساحة ممتلئة؟). صدّر ملف إكسل الآن."}};
 let L='en';try{L=localStorage.getItem(KEY+'_l')||'en'}catch(e){}
 const t=k=>T[L][k];
 const yl=y=>y==='Graduate'?t('grad'):y;
@@ -166,11 +167,12 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 
 function render(){
   const q=$('q').value.trim().toLowerCase();
-  $('plist').innerHTML=S.people.filter(p=>p.name.toLowerCase().includes(q)).map(p=>{
+  $('plist').innerHTML=S.people.filter(p=>(p.name.toLowerCase().includes(q)||(p.phone||'').includes(q))).map(p=>{
     const r=n(p.fee)-n(p.paid);
     return `<div class="card row" data-id="${p.id}">
       ${p.photo?`<img class="av" src="${p.photo}">`:`<div class="av">👤</div>`}
       <div style="flex:1"><div class="b">${esc(p.name)}</div>
+      ${p.phone?`<div class="mu" dir="ltr" style="text-align:start">📞 ${esc(p.phone)}</div>`:''}
       <div class="mu">${t('yr')}: ${esc(yl(p.year))}</div>
       <div class="mu">${t('by')} ${esc(p.by||'-')}</div>
       <div class="mu">${t('paidOf')} ${fmt(n(p.paid))} / ${fmt(n(p.fee))}</div></div>
@@ -194,7 +196,7 @@ function setPv(){$('pv').innerHTML=photo?`<img class="av" src="${photo}">`:'📷
 function calc(){$('prem').textContent=fmt(n($('pf').value)-n($('pp').value))}
 function openP(id){
   editP=id||null;const p=S.people.find(x=>x.id===id)||{name:'',year:'1',fee:S.fee,paid:'',photo:''};
-  $('pn').value=p.name;$('py').value=p.year;$('pf').value=p.fee||'';$('pp').value=p.paid||'';photo=p.photo||'';
+  $('pn').value=p.name;$('pph').value=p.phone||'';$('py').value=p.year;$('pf').value=p.fee||'';$('pp').value=p.paid||'';photo=p.photo||'';
   $('pdel').style.display=id?'':'none';setPv();calc();$('m1').classList.add('show');
 }
 $('pf').oninput=calc;$('pp').oninput=calc;
@@ -211,7 +213,7 @@ $('file').onchange=e=>{
 $('pcancel').onclick=()=>$('m1').classList.remove('show');
 $('psave').onclick=()=>{
   const name=$('pn').value.trim();if(!name){$('pn').focus();return}
-  const d={name,year:$('py').value,fee:n($('pf').value),paid:n($('pp').value),photo};
+  const d={name,phone:$('pph').value.trim(),year:$('py').value,fee:n($('pf').value),paid:n($('pp').value),photo};
   commit('people',editP,d,editP?'edit':'add',name);$('m1').classList.remove('show');render();
 };
 $('pdel').onclick=async()=>{if(await ask(t('cDelP'))){remove('people',editP,($('pn').value||'').trim());$('m1').classList.remove('show');render()}};
@@ -232,11 +234,11 @@ $('reset').onclick=async()=>{if(await ask(t('cAll'))){await wipeAll();render()}}
 
 $('xl').onclick=async()=>{
   const due=S.people.reduce((a,p)=>a+n(p.fee),0),paid=S.people.reduce((a,p)=>a+n(p.paid),0),ex=S.exp.reduce((a,e)=>a+n(e.amount),0);
-  const A=[['#',t('name'),t('hYear'),t('hFee'),t('hPaid'),t('hRem')],...S.people.map((p,i)=>[i+1,p.name,yl(p.year),n(p.fee),n(p.paid),n(p.fee)-n(p.paid)]),[],['',t('total'),'',due,paid,due-paid]];
+  const A=[['#',t('name'),t('phone'),t('hYear'),t('hFee'),t('hPaid'),t('hRem')],...S.people.map((p,i)=>[i+1,p.name,p.phone||'',yl(p.year),n(p.fee),n(p.paid),n(p.fee)-n(p.paid)]),[],['',t('total'),'','',due,paid,due-paid]];
   const B=[['#',t('hExp'),t('amount')],...S.exp.map((e,i)=>[i+1,e.name,n(e.amount)]),[],['',t('total'),ex]];
   const C=[[t('s1'),S.people.length],[t('s2'),due],[t('s3'),paid],[t('s4'),due-paid],[t('s5'),ex],[t('s6'),paid-ex]];
   const wb=XLSX.utils.book_new();
-  [[t('shA'),A,[5,28,10,12,12,12]],[t('shE'),B,[5,32,14]],[t('shS'),C,[34,16]]].forEach(([nm,d,w])=>{
+  [[t('shA'),A,[5,28,16,10,12,12,12]],[t('shE'),B,[5,32,14]],[t('shS'),C,[34,16]]].forEach(([nm,d,w])=>{
     const ws=XLSX.utils.aoa_to_sheet(d);ws['!cols']=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,nm)});
   const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
   try{
